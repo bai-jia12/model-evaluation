@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件夹分配管理系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { text-align: center; color: white; margin-bottom: 30px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+        .condition-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .condition-row input, .condition-row select {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .condition-row input { width: 150px; }
+        .condition-row select { width: 120px; }
+        .btn-remove { background: #ff6b6b; color: white; padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; }
+        .stats { display: flex; gap: 20px; margin-bottom: 20px; }
+        .stat-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-item .number { font-size: 24px; font-weight: bold; }
+        .stat-item .label { font-size: 12px; opacity: 0.8; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+        th { background: #f8f9fa; font-weight: bold; color: #333; }
+        tr:hover { background: #f5f5f5; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; color: #333; }
+        .result-item { padding: 10px; margin: 5px 0; background: #f8f9fa; border-radius: 8px; }
+        .loading { display: none; text-align: center; padding: 20px; }
+        .loading.show { display: block; }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px; height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>文件夹分配管理系统</h1>
+        
+        <div class="card">
+            <div class="card-title">文件夹信息管理</div>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="number" id="folderCount">0</div>
+                    <div class="label">文件夹总数</div>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="scanFolders()">获取文件夹信息</button>
+            <button class="btn btn-primary" onclick="loadFolders()">查看文件夹列表</button>
+            <div class="loading" id="scanLoading">
+                <div class="spinner"></div>
+                <div>正在扫描文件夹，请稍候...</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">分配条件设置</div>
+            <div id="conditionsContainer">
+                <div class="condition-row" data-index="0">
+                    <input type="text" placeholder="店铺名称" class="shop-input">
+                    <input type="number" placeholder="链接总数" class="link-input">
+                    <input type="number" placeholder="重复次数" class="repeat-input">
+                    <select class="color-select">
+                        <option value="">选择花色</option>
+                        <option value="1">花色1</option>
+                        <option value="2">花色2</option>
+                        <option value="3">花色3</option>
+                        <option value="4">花色4</option>
+                        <option value="5">花色5</option>
+                        <option value="6">花色6</option>
+                        <option value="7">花色7</option>
+                        <option value="8">花色8</option>
+                        <option value="9">花色9</option>
+                        <option value="10">花色10</option>
+                        <option value="11">花色11</option>
+                        <option value="12">花色12</option>
+                    </select>
+                    <button class="btn-remove" onclick="removeCondition(this)">X</button>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="addCondition()">添加条件</button>
+            <button class="btn btn-success" onclick="startAllocation()">开始分配</button>
+            <div class="loading" id="allocationLoading">
+                <div class="spinner"></div>
+                <div>正在执行分配，请稍候...</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">分配结果</div>
+            <div id="allocationResult"></div>
+        </div>
+    </div>
+    
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <div class="modal-title">确认分配结果</div>
+            <div id="modalContent"></div>
+            <div style="margin-top: 20px; text-align: center;">
+                <button class="btn btn-success" onclick="confirmAllocation()">确认</button>
+                <button class="btn btn-primary" onclick="closeModal()">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="folderModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-title">文件夹列表</div>
+            <div id="folderListContent"></div>
+            <div style="margin-top: 20px; text-align: center;">
+                <button class="btn btn-primary" onclick="closeFolderModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentProcessId = '';
+        let conditionIndex = 1;
+        
+        function scanFolders() {
+            document.getElementById('scanLoading').classList.add('show');
+            fetch('/api/folders/scan', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('scanLoading').classList.remove('show');
+                    if (data.success) {
+                        alert(data.message);
+                        document.getElementById('folderCount').textContent = data.count;
+                    } else {
+                        alert('错误: ' + data.message);
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('scanLoading').classList.remove('show');
+                    alert('请求失败: ' + err);
+                });
+        }
+        
+        function loadFolders() {
+            fetch('/api/folders')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('folderCount').textContent = data.total;
+                        showFolderModal(data.data);
+                    } else {
+                        alert('错误: ' + data.message);
+                    }
+                });
+        }
+        
+        function showFolderModal(folders) {
+            let html = '<table><thead><tr><th>序号</th><th>名称</th><th>图片数量</th><th>路径</th></tr></thead><tbody>';
+            folders.slice(0, 100).forEach(f => {
+                html += '<tr><td>' + f.folderSeq + '</td><td>' + f.name + '</td><td>' + f.imageCount + '</td><td>' + f.folderPath + '</td></tr>';
+            });
+            html += '</tbody></table>';
+            if (folders.length > 100) {
+                html += '<p style="text-align:center;margin-top:10px;color:#666;">仅显示前100条，共' + folders.length + '条记录</p>';
+            }
+            document.getElementById('folderListContent').innerHTML = html;
+            document.getElementById('folderModal').classList.add('show');
+        }
+        
+        function closeFolderModal() {
+            document.getElementById('folderModal').classList.remove('show');
+        }
+        
+        function addCondition() {
+            const container = document.getElementById('conditionsContainer');
+            const html = '<div class="condition-row" data-index="' + conditionIndex + '">' +
+                '<input type="text" placeholder="店铺名称" class="shop-input">' +
+                '<input type="number" placeholder="链接总数" class="link-input">' +
+                '<input type="number" placeholder="重复次数" class="repeat-input">' +
+                '<select class="color-select">' +
+                '<option value="">选择花色</option>' +
+                '<option value="1">花色1</option><option value="2">花色2</option><option value="3">花色3</option>' +
+                '<option value="4">花色4</option><option value="5">花色5</option><option value="6">花色6</option>' +
+                '<option value="7">花色7</option><option value="8">花色8</option><option value="9">花色9</option>' +
+                '<option value="10">花色10</option><option value="11">花色11</option><option value="12">花色12</option>' +
+                '</select>' +
+                '<button class="btn-remove" onclick="removeCondition(this)">X</button></div>';
+            container.insertAdjacentHTML('beforeend', html);
+            conditionIndex++;
+        }
+        
+        function removeCondition(btn) {
+            const rows = document.querySelectorAll('.condition-row');
+            if (rows.length > 1) {
+                btn.parentElement.remove();
+            } else {
+                alert('至少需要保留一个条件');
+            }
+        }
+        
+        function collectConditions() {
+            const conditions = [];
+            const rows = document.querySelectorAll('.condition-row');
+            rows.forEach(row => {
+                const shop = row.querySelector('.shop-input').value.trim();
+                const linkTotal = parseInt(row.querySelector('.link-input').value) || 0;
+                const repeatCount = parseInt(row.querySelector('.repeat-input').value) || 0;
+                const color = parseInt(row.querySelector('.color-select').value) || 0;
+                if (shop && linkTotal > 0 && repeatCount > 0 && color > 0) {
+                    conditions.push({ shop, linkTotal, repeatCount, color });
+                }
+            });
+            return conditions;
+        }
+        
+        function startAllocation() {
+            const conditions = collectConditions();
+            if (conditions.length === 0) {
+                alert('请填写完整的分配条件');
+                return;
+            }
+            document.getElementById('allocationLoading').classList.add('show');
+            fetch('/api/allocation/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ conditions })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('allocationLoading').classList.remove('show');
+                if (data.success) {
+                    currentProcessId = data.data.processId;
+                    showAllocationResult(data.data);
+                    showConfirmModal(data.data);
+                } else {
+                    alert('错误: ' + data.message);
+                }
+            })
+            .catch(err => {
+                document.getElementById('allocationLoading').classList.remove('show');
+                alert('请求失败: ' + err);
+            });
+        }
+        
+        function showAllocationResult(result) {
+            const html = '<div class="result-item"><strong>流程ID:</strong> ' + result.processId + '</div>' +
+                '<div class="result-item"><strong>成功分配:</strong> ' + result.successCount + ' 条</div>' +
+                '<div class="result-item"><strong>分配失败:</strong> ' + result.failCount + ' 条</div>' +
+                '<div class="result-item"><strong>总条件数:</strong> ' + result.totalConditions + ' 条</div>';
+            document.getElementById('allocationResult').innerHTML = html;
+        }
+        
+        function showConfirmModal(result) {
+            const html = '<div class="result-item"><strong>流程ID:</strong> ' + result.processId + '</div>' +
+                '<div class="result-item"><strong>成功分配:</strong> ' + result.successCount + ' 条</div>' +
+                '<div class="result-item"><strong>分配失败:</strong> ' + result.failCount + ' 条</div>' +
+                '<p style="margin-top:15px;color:#666;">是否确认此分配结果？</p>';
+            document.getElementById('modalContent').innerHTML = html;
+            document.getElementById('confirmModal').classList.add('show');
+        }
+        
+        function confirmAllocation() {
+            if (!currentProcessId) { alert('未找到流程ID'); return; }
+            fetch('/api/allocation/confirm?processId=' + currentProcessId, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('确认成功！');
+                        closeModal();
+                    } else {
+                        alert('错误: ' + data.message);
+                    }
+                });
+        }
+        
+        function closeModal() {
+            document.getElementById('confirmModal').classList.remove('show');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+com\example\docprocessor\dto\DocumentResult.class
+com\example\docprocessor\controller\DocumentController.class
+com\example\docprocessor\DocprocessorApplication.class
+com\example\docprocessor\service\DocumentService.class

@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    url: jdbc:sqlite:./folder_allocation.db
+    driver-class-name: org.sqlite.JDBC
+    username: ""
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.sqlite.hibernate.dialect.SQLiteDialect
+        format_sql: true
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    encoding: UTF-8
+    mode: HTML
+
+server:
+  port: 8081
+
+logging:
+  level:
+    com.example.folderallocation: DEBUG

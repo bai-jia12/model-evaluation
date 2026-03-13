@@ -1,0 +1,11 @@
+com\example\documentnotion\dto\TextChunk$TextChunkBuilder.class
+com\example\documentnotion\config\ProcessingConfig.class
+com\example\documentnotion\service\DocumentProcessingService.class
+com\example\documentnotion\service\NotionService.class
+com\example\documentnotion\DocumentNotionProcessorApplication.class
+com\example\documentnotion\dto\ProcessResult.class
+com\example\documentnotion\dto\TextChunk.class
+com\example\documentnotion\dto\ProcessResult$ProcessResultBuilder.class
+com\example\documentnotion\controller\DocumentController.class
+com\example\documentnotion\dto\UploadRequest.class
+com\example\documentnotion\config\NotionConfig.class

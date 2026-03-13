@@ -1,0 +1,11 @@
+com\example\folderallocation\entity\FolderAllocationShop.class
+com\example\folderallocation\repository\FolderAllocationShopRepository.class
+com\example\folderallocation\repository\FolderDetailRepository.class
+com\example\folderallocation\entity\FolderDetail.class
+com\example\folderallocation\entity\FolderAllocation.class
+com\example\folderallocation\FolderAllocationApplication.class
+com\example\folderallocation\repository\FolderAllocationRepository.class
+com\example\folderallocation\service\AllocationService.class
+com\example\folderallocation\controller\FolderController.class
+com\example\folderallocation\service\FolderService.class
+com\example\folderallocation\service\AllocationService$AllocationCondition.class

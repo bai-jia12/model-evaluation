@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>处理结果</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            background: #f5f7fa;
+            padding: 30px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #5567d0;
+        }
+
+        .prompt-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .prompt-box h3 {
+            margin-bottom: 10px;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .prompt-text {
+            font-size: 18px;
+            line-height: 1.6;
+        }
+
+        .document {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .document-title {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .chunk {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #fafbfc;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .chunk-header {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .chunk-content {
+            line-height: 1.8;
+            color: #444;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 15px;
+        }
+
+        .stats {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 50px 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>文档处理结果</h1>
+            <a href="/" class="back-btn">返回首页</a>
+        </div>
+
+        <div class="prompt-box" th:if="${results != null and #lists.size(results) > 0}">
+            <h3>统一提示词 (Prompt):</h3>
+            <div class="prompt-text" th:text="${results[0].prompt}"></div>
+        </div>
+
+        <div th:each="result : ${results}">
+            <div class="document">
+                <div class="document-title" th:text="${result.fileName}"></div>
+                
+                <div th:each="chunk, iterStat : ${result.chunks}">
+                    <div class="chunk">
+                        <div class="chunk-header">第 <span th:text="${iterStat.count}"></span> 段 
+                            <span th:text="'(' + #strings.length(chunk) + ' 字)'"></span>
+                        </div>
+                        <div class="chunk-content" th:text="${chunk}"></div>
+                    </div>
+                </div>
+
+                <div class="stats" th:text="'共 ' + ${result.chunkCount} + ' 段，总计 ' + ${result.totalChars} + ' 字'"></div>
+            </div>
+        </div>
+
+        <div class="empty-state" th:if="${results == null or #lists.size(results) == 0}">
+            暂无处理结果
+        </div>
+    </div>
+</body>
+</html>

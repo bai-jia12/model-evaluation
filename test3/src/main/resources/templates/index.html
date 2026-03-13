@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件夹分配管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            color: #555;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .form-col {
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .condition-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .condition-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .condition-title {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .message {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .close {
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .close:hover {
+            color: #333;
+        }
+        
+        .modal-footer {
+            margin-top: 20px;
+            text-align: right;
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-item {
+            background: #e9ecef;
+            padding: 10px 20px;
+            border-radius: 4px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>文件夹分配管理系统</h1>
+        
+        <!-- 文件夹扫描区域 -->
+        <div class="section">
+            <h2>获取文件夹信息</h2>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-label">当前数据库文件夹数量</div>
+                    <div class="stat-value" id="folderCount" th:text="${folderCount}">0</div>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="scanFolders()">获取文件夹信息</button>
+            <div id="scanMessage"></div>
+        </div>
+        
+        <!-- 分配条件设置区域 -->
+        <div class="section">
+            <h2>分配条件设置</h2>
+            <div id="conditionsContainer">
+                <!-- 动态添加的条件项将显示在这里 -->
+            </div>
+            <button class="btn btn-secondary" onclick="addCondition()">+ 添加条件</button>
+            <button class="btn btn-success" onclick="startAllocation()" style="margin-left: 10px;">开始分配</button>
+            <div id="allocationMessage"></div>
+        </div>
+        
+        <!-- 分配结果区域 -->
+        <div class="section" id="resultSection" style="display: none;">
+            <h2>分配结果</h2>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+    
+    <!-- 确认对话框 -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">分配结果确认</span>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div id="modalBody">
+                <!-- 动态内容 -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button class="btn btn-danger" onclick="cancelAllocation()">撤销</button>
+                <button class="btn btn-success" onclick="confirmAllocation()">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let conditionCount = 0;
+        let currentProcessId = null;
+        
+        // 页面加载时添加一个默认条件
+        window.onload = function() {
+            addCondition();
+        };
+        
+        function addCondition() {
+            conditionCount++;
+            const container = document.getElementById('conditionsContainer');
+            const conditionDiv = document.createElement('div');
+            conditionDiv.className = 'condition-item';
+            conditionDiv.id = 'condition-' + conditionCount;
+            
+            conditionDiv.innerHTML = `
+                <div class="condition-header">
+                    <span class="condition-title">条件 #${conditionCount}</span>
+                    <button class="remove-btn" onclick="removeCondition(${conditionCount})">删除</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label>店铺</label>
+                            <input type="text" class="form-control shop-input" placeholder="请输入店铺名称">
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label>链接总数</label>
+                            <input type="number" class="form-control total-links-input" placeholder="请输入链接总数" min="1">
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label>重复次数</label>
+                            <input type="number" class="form-control repeat-count-input" placeholder="请输入重复次数" min="1">
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label>花色 (1-12)</label>
+                            <input type="number" class="form-control pattern-no-input" placeholder="1-12" min="1" max="12">
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(conditionDiv);
+        }
+        
+        function removeCondition(id) {
+            const element = document.getElementById('condition-' + id);
+            if (element) {
+                element.remove();
+            }
+        }
+        
+        function showMessage(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="message ${type}">${message}</div>`;
+            setTimeout(() => {
+                element.innerHTML = '';
+            }, 5000);
+        }
+        
+        function scanFolders() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '扫描中...';
+            
+            fetch('/api/folders/scan', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('scanMessage', data.message, 'success');
+                    document.getElementById('folderCount').textContent = data.count;
+                } else {
+                    showMessage('scanMessage', data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('scanMessage', '扫描失败: ' + error, 'error');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = '获取文件夹信息';
+            });
+        }
+        
+        function collectConditions() {
+            const conditions = [];
+            const items = document.querySelectorAll('.condition-item');
+            
+            items.forEach(item => {
+                const shop = item.querySelector('.shop-input').value.trim();
+                const totalLinks = parseInt(item.querySelector('.total-links-input').value) || 0;
+                const repeatCount = parseInt(item.querySelector('.repeat-count-input').value) || 0;
+                const patternNo = parseInt(item.querySelector('.pattern-no-input').value) || 0;
+                
+                if (shop && totalLinks > 0 && repeatCount > 0 && patternNo >= 1 && patternNo <= 12) {
+                    conditions.push({
+                        shop: shop,
+                        totalLinks: totalLinks,
+                        repeatCount: repeatCount,
+                        patternNo: patternNo
+                    });
+                }
+            });
+            
+            return conditions;
+        }
+        
+        function startAllocation() {
+            const conditions = collectConditions();
+            
+            if (conditions.length === 0) {
+                showMessage('allocationMessage', '请至少添加一个有效的条件', 'error');
+                return;
+            }
+            
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '分配中...';
+            
+            fetch('/api/allocation/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(conditions)
+            })
+            .then(response => response.json())
+            .then(data => {
+                currentProcessId = data.processId;
+                showAllocationResult(data);
+            })
+            .catch(error => {
+                showMessage('allocationMessage', '分配失败: ' + error, 'error');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = '开始分配';
+            });
+        }
+        
+        function showAllocationResult(result) {
+            const modalBody = document.getElementById('modalBody');
+            
+            if (!result) {
+                modalBody.innerHTML = '<p style="color: red;">返回数据为空</p>';
+                document.getElementById('confirmModal').style.display = 'block';
+                return;
+            }
+            
+            let html = '<div style="margin-bottom: 20px;">';
+            html += '<p><strong>流程ID:</strong> ' + (result.processId || 'N/A') + '</p>';
+            html += '<p><strong>总体状态:</strong> ' + (result.success ? '<span style="color: green;">成功</span>' : '<span style="color: red;">部分失败</span>') + '</p>';
+            if (result.message) {
+                html += '<p><strong>消息:</strong> ' + result.message + '</p>';
+            }
+            html += '</div>';
+            
+            if (!result.details || !Array.isArray(result.details) || result.details.length === 0) {
+                html += '<p style="color: orange;">没有详细的分配信息</p>';
+                modalBody.innerHTML = html;
+                document.getElementById('confirmModal').style.display = 'block';
+                return;
+            }
+            
+            html += '<table>';
+            html += '<thead><tr>';
+            html += '<th>店铺</th>';
+            html += '<th>链接总数</th>';
+            html += '<th>重复次数</th>';
+            html += '<th>花色</th>';
+            html += '<th>分配文件夹</th>';
+            html += '<th>实际链接数</th>';
+            html += '<th>状态</th>';
+            html += '</tr></thead>';
+            html += '<tbody>';
+            
+            result.details.forEach(detail => {
+                html += '<tr>';
+                html += '<td>' + detail.shop + '</td>';
+                html += '<td>' + detail.totalLinks + '</td>';
+                html += '<td>' + detail.repeatCount + '</td>';
+                html += '<td>' + detail.patternNo + '</td>';
+                html += '<td>' + (detail.allocatedFolderNos ? detail.allocatedFolderNos.join(', ') : '-') + '</td>';
+                html += '<td>' + (detail.actualLinkCount || '-') + '</td>';
+                html += '<td>' + (detail.success ? '<span style="color: green;">成功</span>' : '<span style="color: red;">' + detail.message + '</span>') + '</td>';
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            
+            modalBody.innerHTML = html;
+            document.getElementById('confirmModal').style.display = 'block';
+            
+            showMessage('allocationMessage', result.message, result.success ? 'success' : 'info');
+        }
+        
+        function closeModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+        }
+        
+        function confirmAllocation() {
+            if (!currentProcessId) return;
+            
+            fetch('/api/allocation/confirm?processId=' + currentProcessId, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('确认成功！');
+                    closeModal();
+                    showMessage('allocationMessage', '分配已确认', 'success');
+                } else {
+                    alert('确认失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('确认失败: ' + error);
+            });
+        }
+        
+        function cancelAllocation() {
+            if (!currentProcessId) return;
+            
+            if (!confirm('确定要撤销此次分配吗？')) {
+                return;
+            }
+            
+            fetch('/api/allocation/cancel?processId=' + currentProcessId, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('撤销成功！');
+                    closeModal();
+                    showMessage('allocationMessage', '分配已撤销', 'info');
+                } else {
+                    alert('撤销失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('撤销失败: ' + error);
+            });
+        }
+        
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('confirmModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        };
+    </script>
+</body>
+</html>

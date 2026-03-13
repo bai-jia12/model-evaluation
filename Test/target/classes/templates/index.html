@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>文件夹分配系统</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .condition-row { margin: 10px 0; padding: 10px; background: #f9f9f9; border-radius: 4px; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
+        button:hover { background: #0056b3; }
+        input, select { padding: 6px; margin: 3px; border: 1px solid #ddd; border-radius: 3px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #f2f2f2; }
+        #processId { font-weight: bold; color: #d63384; }
+    </style>
+</head>
+<body>
+    <h1>文件夹分配系统</h1>
+
+    <div class="section">
+        <h3>文件夹信息获取</h3>
+        <button onclick="scanFolders()">获取文件夹信息</button>
+        <p id="scan-result"></p>
+    </div>
+
+    <div class="section">
+        <h3>文件夹分配</h3>
+        <div style="margin-bottom: 15px;">
+            <label>流程ID: </label>
+            <span id="processId"></span>
+            <button onclick="generateProcessId()">生成流程ID</button>
+        </div>
+
+        <div id="conditions-container">
+            <div class="condition-row">
+                店铺: <input type="text" name="shop" placeholder="店铺名称">
+                链接总数: <input type="number" name="totalLinks" min="1" value="100">
+                重复次数: <input type="number" name="repeatCount" min="1" value="1">
+                花色: <select name="pattern">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                </select>
+            </div>
+        </div>
+
+        <button onclick="addCondition()">添加条件</button>
+        <button onclick="startAllocation()" style="background: #28a745;">开始分配</button>
+    </div>
+
+    <div class="section">
+        <h3>文件夹明细表</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>文件夹序号</th>
+                    <th>名称</th>
+                    <th>图片数量</th>
+                    <th>路径</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="folder : ${folders}">
+                    <td th:text="${folder.id}"></td>
+                    <td th:text="${folder.folderSeq}"></td>
+                    <td th:text="${folder.name}"></td>
+                    <td th:text="${folder.picCount}"></td>
+                    <td th:text="${folder.folderPath}"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function generateProcessId() {
+            fetch('/generate-process-id')
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('processId').textContent = data.processId;
+                });
+        }
+
+        function scanFolders() {
+            document.getElementById('scan-result').textContent = '扫描中...';
+            fetch('/scan-folders', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('scan-result').textContent = '扫描完成，共处理 ' + data.count + ' 个文件夹';
+                    location.reload();
+                });
+        }
+
+        function addCondition() {
+            const container = document.getElementById('conditions-container');
+            const newRow = container.children[0].cloneNode(true);
+            const inputs = newRow.querySelectorAll('input');
+            inputs.forEach(input => input.value = '');
+            container.appendChild(newRow);
+        }
+
+        function startAllocation() {
+            const processId = document.getElementById('processId').textContent;
+            if (!processId) {
+                alert('请先生成流程ID');
+                return;
+            }
+
+            const conditions = [];
+            const rows = document.querySelectorAll('.condition-row');
+            rows.forEach(row => {
+                const shop = row.querySelector('[name="shop"]').value;
+                const totalLinks = row.querySelector('[name="totalLinks"]').value;
+                const repeatCount = row.querySelector('[name="repeatCount"]').value;
+                const pattern = row.querySelector('[name="pattern"]').value;
+
+                if (shop && totalLinks && repeatCount && pattern) {
+                    conditions.push({
+                        shop: shop,
+                        totalLinks: parseInt(totalLinks),
+                        repeatCount: parseInt(repeatCount),
+                        pattern: parseInt(pattern)
+                    });
+                }
+            });
+
+            if (conditions.length === 0) {
+                alert('请至少填写一个条件');
+                return;
+            }
+
+            fetch('/start-allocation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ conditions: conditions, processId: processId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (confirm('分配完成，是否确认？')) {
+                        confirmAllocation(processId);
+                    }
+                }
+            });
+        }
+
+        function confirmAllocation(processId) {
+            fetch('/confirm-allocation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ processId: processId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('已确认');
+                    location.reload();
+                }
+            });
+        }
+    </script>
+</body>
+</html>

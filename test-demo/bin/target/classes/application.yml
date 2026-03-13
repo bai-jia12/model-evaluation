@@ -1,0 +1,33 @@
+server:
+  port: 8082
+
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 100MB
+      file-size-threshold: 2KB
+  
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    encoding: UTF-8
+    mode: HTML
+
+# Notion API Configuration
+notion:
+  api:
+    token: ${NOTION_API_TOKEN:your_notion_integration_token}
+    version: "2022-06-28"
+    base-url: "https://api.notion.com/v1"
+  # 父页面ID，所有创建的页面都会作为这个页面的子页面
+  parent-page-id: ${NOTION_PARENT_PAGE_ID:your_parent_page_id}
+
+# Document processing configuration
+processing:
+  # 每段最大字符数
+  chunk-size: 5000
+  # 上传文件临时目录
+  upload-dir: ${java.io.tmpdir}/document-uploads
