@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文档处理系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { text-align: center; color: white; margin-bottom: 30px; font-size: 2.5em; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+        .card { background: white; border-radius: 16px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); margin-bottom: 20px; }
+        .upload-area { border: 3px dashed #667eea; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s; background: #f8f9ff; }
+        .upload-area:hover { border-color: #764ba2; background: #f0f2ff; }
+        .upload-area.dragover { border-color: #764ba2; background: #e8ebff; }
+        .upload-icon { font-size: 48px; margin-bottom: 10px; }
+        .file-input { display: none; }
+        .file-list { margin-top: 20px; }
+        .file-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #f8f9fa; border-radius: 8px; margin-bottom: 8px; }
+        .file-item .name { font-weight: 500; color: #333; }
+        .file-item .size { color: #666; font-size: 0.9em; }
+        .file-item .remove { background: #ff4757; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 14px; }
+        .form-group { margin-top: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
+        .form-group textarea { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; resize: vertical; min-height: 100px; }
+        .form-group textarea:focus { outline: none; border-color: #667eea; }
+        .btn { display: inline-block; padding: 14px 32px; font-size: 16px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s; margin-top: 20px; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); }
+        .btn-primary:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+        .results { margin-top: 30px; }
+        .result-card { background: white; border-radius: 12px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .result-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .result-header h3 { margin: 0; font-size: 1.1em; }
+        .result-stats { display: flex; gap: 15px; font-size: 0.9em; align-items: center; }
+        .result-body { padding: 20px; }
+        .chunk-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+        .chunk-tab { padding: 8px 16px; background: #f0f0f0; border: none; border-radius: 20px; cursor: pointer; font-size: 13px; }
+        .chunk-tab:hover { background: #e0e0e0; }
+        .chunk-tab.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .content-box { background: #f8f9fa; border-radius: 8px; padding: 20px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; font-size: 14px; line-height: 1.6; color: #333; }
+        .error-msg { background: #fff5f5; color: #c53030; padding: 12px; border-radius: 8px; border-left: 4px solid #c53030; }
+        .loading { display: none; text-align: center; padding: 40px; }
+        .loading.show { display: block; }
+        .spinner { width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .copy-btn { background: #28a745; color: white; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .copy-btn:hover { background: #218838; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>文档处理系统</h1>
+        <div class="card">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <p><strong>点击或拖拽文件到此处上传</strong></p>
+                <p style="color: #666; margin-top: 8px;">支持 PDF / Word / TXT / MD / RTF 格式，最多10个文件</p>
+                <input type="file" id="fileInput" class="file-input" multiple accept=".pdf,.doc,.docx,.txt,.md,.rtf">
+            </div>
+            <div class="file-list" id="fileList"></div>
+            <div class="form-group">
+                <label for="prompt">提示词 (Prompt)</label>
+                <textarea id="prompt" placeholder="输入统一的提示词，将应用于所有文档处理..."></textarea>
+            </div>
+            <button class="btn btn-primary" id="submitBtn" onclick="submitFiles()" disabled>开始处理</button>
+        </div>
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在处理文档，请稍候...</p>
+        </div>
+        <div class="results" id="results"></div>
+    </div>
+    <script>
+        let selectedFiles = [];
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const submitBtn = document.getElementById('submitBtn');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+        uploadArea.addEventListener('drop', (e) => { e.preventDefault(); uploadArea.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        function handleFiles(files) {
+            const validExtensions = ['pdf', 'doc', 'docx', 'txt', 'md', 'rtf'];
+            for (let file of files) {
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (validExtensions.includes(ext)) {
+                    if (selectedFiles.length < 10) selectedFiles.push(file);
+                    else { alert('最多只能上传10个文件'); break; }
+                } else alert('不支持的文件格式: ' + file.name);
+            }
+            updateFileList();
+        }
+
+        function updateFileList() {
+            fileList.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = '<span class="name">' + file.name + '</span><div><span class="size">' + formatSize(file.size) + '</span><button class="remove" onclick="removeFile(' + index + ')">×</button></div>';
+                fileList.appendChild(item);
+            });
+            submitBtn.disabled = selectedFiles.length === 0;
+        }
+
+        function removeFile(index) { selectedFiles.splice(index, 1); updateFileList(); }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        async function submitFiles() {
+            if (selectedFiles.length === 0) return;
+            const prompt = document.getElementById('prompt').value;
+            const formData = new FormData();
+            selectedFiles.forEach(file => formData.append('files', file));
+            formData.append('prompt', prompt);
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('results').innerHTML = '';
+            submitBtn.disabled = true;
+            try {
+                const response = await fetch('/upload', { method: 'POST', body: formData });
+                const result = await response.json();
+                if (result.success) displayResults(result.results);
+                else alert(result.message || '处理失败');
+            } catch (error) {
+                alert('请求失败: ' + error.message);
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+                submitBtn.disabled = false;
+            }
+        }
+
+        function displayResults(results) {
+            const container = document.getElementById('results');
+            container.innerHTML = '';
+            results.forEach((doc, docIndex) => {
+                const card = document.createElement('div');
+                card.className = 'result-card';
+                if (doc.error) {
+                    card.innerHTML = '<div class="result-header"><h3>📄 ' + doc.fileName + '</h3></div><div class="result-body"><div class="error-msg">' + doc.error + '</div></div>';
+                } else {
+                    let tabsHtml = '<div class="chunk-tabs"><button class="chunk-tab active" onclick="showContent(' + docIndex + ', \'merged\')">合并内容</button><button class="chunk-tab" onclick="showContent(' + docIndex + ', \'original\')">原始文本</button>';
+                    for (let i = 0; i < doc.chunks.length; i++) {
+                        tabsHtml += '<button class="chunk-tab" onclick="showContent(' + docIndex + ', \'chunk\', ' + i + ')">段落 ' + (i + 1) + '</button>';
+                    }
+                    tabsHtml += '</div>';
+                    card.innerHTML = '<div class="result-header"><h3>📄 ' + doc.fileName + '</h3><div class="result-stats"><span>📊 ' + doc.charCount + ' 字</span><span>📑 ' + doc.chunkCount + ' 段</span><button class="copy-btn" onclick="copyContent(' + docIndex + ')">📋 复制</button></div></div><div class="result-body">' + tabsHtml + '<div class="content-box" id="content-box-' + docIndex + '">' + escapeHtml(doc.mergedContent) + '</div></div>';
+                    card.dataset.doc = JSON.stringify(doc);
+                }
+                container.appendChild(card);
+            });
+        }
+
+        function showContent(docIndex, type, chunkIndex) {
+            const card = document.querySelectorAll('.result-card')[docIndex];
+            const doc = JSON.parse(card.dataset.doc);
+            const contentBox = document.getElementById('content-box-' + docIndex);
+            const tabs = card.querySelectorAll('.chunk-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            if (type === 'merged') { contentBox.textContent = doc.mergedContent; tabs[0].classList.add('active'); }
+            else if (type === 'original') { contentBox.textContent = doc.originalText; tabs[1].classList.add('active'); }
+            else if (type === 'chunk') { contentBox.textContent = doc.chunks[chunkIndex]; tabs[chunkIndex + 2].classList.add('active'); }
+        }
+
+        function copyContent(docIndex) {
+            const contentBox = document.getElementById('content-box-' + docIndex);
+            navigator.clipboard.writeText(contentBox.textContent).then(() => alert('内容已复制到剪贴板'));
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

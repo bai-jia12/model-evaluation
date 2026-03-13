@@ -1,0 +1,12 @@
+server:
+  port: 8080
+
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 500MB
+  thymeleaf:
+    cache: false
+    encoding: UTF-8

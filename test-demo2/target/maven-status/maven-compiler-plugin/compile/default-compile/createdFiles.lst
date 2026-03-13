@@ -1,0 +1,5 @@
+com\example\docproc\service\DocumentParserService.class
+com\example\docproc\dto\DocumentResult.class
+com\example\docproc\controller\DocumentController.class
+com\example\docproc\service\TextSplitService.class
+com\example\docproc\DocumentProcessorApplication.class
